@@ -25,6 +25,9 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+//import org.opencv.dnn.
+
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
