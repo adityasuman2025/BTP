@@ -25,9 +25,6 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-//import org.opencv.dnn.
-
-
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
@@ -68,37 +65,16 @@ public class MainActivity extends AppCompatActivity {
                     }
                     else // all permission are granted so starting camera
                     {
-                        openBackCamera();
+                        Intent cameraActivity = new Intent(MainActivity.this, CameraActivity.class);
+                        startActivity(cameraActivity);
+                        //openBackCamera();
                     }
                 }
             }
         });
     }
 
-//function to capture and store image
-    private void openBackCamera()
-    {
-        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-        StrictMode.setVmPolicy(builder.build());
-
-    //naming the image
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = timeStamp + ".jpg";
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
-
-    //storing the image in storage
-        pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
-        File file = new File(pictureImagePath);
-        Uri outputFileUri = Uri.fromFile(file);
-
-    //capturing image
-        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-        startActivityForResult(cameraIntent, 1);
-    }
-
-//function to ask for permissons
+    //function to ask for permissons
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
     {
@@ -131,26 +107,49 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1) {
-            File imgFile = new File(pictureImagePath);
-            if (imgFile.exists()) {
-                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                Bitmap rotatedMyBitmap = rotateImage(myBitmap, 90);
+//function to capture and store image
+//    private void openBackCamera()
+//    {
+//        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+//        StrictMode.setVmPolicy(builder.build());
+//
+//    //naming the image
+//        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+//        String imageFileName = timeStamp + ".jpg";
+//        File storageDir = Environment.getExternalStoragePublicDirectory(
+//                Environment.DIRECTORY_PICTURES);
+//
+//    //storing the image in storage
+//        pictureImagePath = storageDir.getAbsolutePath() + "/" + imageFileName;
+//        File file = new File(pictureImagePath);
+//        Uri outputFileUri = Uri.fromFile(file);
+//
+//    //capturing image
+//        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+//        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+//        startActivityForResult(cameraIntent, 1);
+//    }
 
-
-                imageView.setImageBitmap(rotatedMyBitmap);
-            }
-        }
-    }
-
-//function to rotate image
-    public static Bitmap rotateImage(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+//    {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == 1) {
+//            File imgFile = new File(pictureImagePath);
+//            if (imgFile.exists()) {
+//                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+//                Bitmap rotatedMyBitmap = rotateImage(myBitmap, 90);
+//
+//
+//                imageView.setImageBitmap(rotatedMyBitmap);
+//            }
+//        }
+//    }
+//
+////function to rotate image
+//    public static Bitmap rotateImage(Bitmap source, float angle) {
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(angle);
+//        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+//                matrix, true);
+//    }
 }
