@@ -1,6 +1,7 @@
 package in.mngo.btpdemo;
 
 import android.graphics.Bitmap;
+import android.inputmethodservice.Keyboard;
 import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +31,15 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 public class CameraActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
 {
@@ -133,9 +143,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                                 }
                             }
 
-                            updatefeed(Integer.toString(count));
+                        //storing coordinates in excel sheet
+                            createExcel(coords);
 
-//                          Log.w(String.valueOf(this), coords.toString() );
                         }
                         catch (IllegalArgumentException e) {
                             e.printStackTrace();
@@ -165,15 +175,99 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         });
     }
 
-//saving the image in phone
-    private void storeImage(Bitmap image) {
-        File pictureFile = getOutputMediaFile();
-        if (pictureFile == null) {
-            Log.d(String.valueOf(CameraActivity.this),
-                    "Error creating media file, check storage permissions: ");// e.getMessage());
+//function to create and store coordinates in excel
+    private void createExcel(ArrayList<int[]> coords)
+    {
+        Workbook wb = new HSSFWorkbook();
+
+    //Now we are creating sheet
+        Sheet sheet=null;
+        sheet = wb.createSheet("Coordinates");
+        sheet.setColumnWidth(0,(10*200));
+        sheet.setColumnWidth(1,(10*200));
+
+    //Now title column and row
+        CellStyle titleCellStyle = wb.createCellStyle();
+        titleCellStyle.setFillForegroundColor(HSSFColor.LIGHT_YELLOW.index);
+        titleCellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+
+        Row row = sheet.createRow(0);
+
+        Cell cell = null;
+        cell=row.createCell(0);
+        cell.setCellValue("X");
+        cell.setCellStyle(titleCellStyle);
+
+        cell=row.createCell(1);
+        cell.setCellValue("Y");
+        cell.setCellStyle(titleCellStyle);
+
+    //Now points coordinates
+        int coordSize = coords.size();
+        for(int i=0; i< coordSize; i++)
+        {
+            Row tempRow = sheet.createRow(i+1);
+
+            Cell tempCell = null;
+            tempCell = tempRow.createCell(0);
+            tempCell.setCellValue(coords.get(i)[0]);
+
+            tempCell = tempRow.createCell(1);
+            tempCell.setCellValue(coords.get(i)[1]);
+        }
+
+        File excelFile = getOutputExcelFile();
+        if (excelFile == null) {
+            updatefeed("Error exporting excel file, check storage permissions");
             return;
         }
-        try {
+
+        try
+        {
+            FileOutputStream fos = new FileOutputStream(excelFile);
+            wb.write(fos);
+            fos.close();
+
+            updatefeed("Excel File exported");
+        } catch (FileNotFoundException e) {
+            updatefeed("Failed to export excel");
+        } catch (java.io.IOException e) {
+            updatefeed("Failed to export excel");
+        }
+    }
+
+    private File getOutputExcelFile(){
+        File mediaStorageDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS);
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName="BTP_coords_"+ timeStamp +".xls";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
+    }
+
+//saving the image in phone
+    private void storeImage(Bitmap image)
+    {
+        File pictureFile = getOutputMediaFile();
+
+        if (pictureFile == null) {
+            Log.d(String.valueOf(CameraActivity.this),
+                    "Error creating media file, check storage permissions");// e.getMessage());
+            return;
+        }
+
+        try
+        {
             FileOutputStream fos = new FileOutputStream(pictureFile);
             image.compress(Bitmap.CompressFormat.PNG, 90, fos);
             fos.close();
@@ -184,7 +278,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         }
     }
 
-    private  File getOutputMediaFile(){
+    private File getOutputMediaFile(){
         File mediaStorageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES);
 
@@ -198,7 +292,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         // Create a media file name
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
         File mediaFile;
-        String mImageName="MI_"+ timeStamp +".jpg";
+        String mImageName="BTP_images_"+ timeStamp +".jpg";
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
         return mediaFile;
     }
