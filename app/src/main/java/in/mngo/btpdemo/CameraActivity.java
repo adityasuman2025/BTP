@@ -28,9 +28,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -61,51 +63,64 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         imageView = findViewById(R.id.imageView);
 
     // defining the camera preview view
-        cameraBridgeViewBase = findViewById(R.id.CameraView);
-        cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-        cameraBridgeViewBase.setCvCameraViewListener(this);
 
-        baseLoaderCallback = new BaseLoaderCallback(this) {
-            @Override
-            public void onManagerConnected(int status) {
-                super.onManagerConnected(status);
+        try {
+            cameraBridgeViewBase = findViewById(R.id.CameraView);
+            cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
+            cameraBridgeViewBase.setCvCameraViewListener(this);
 
-                switch(status){
-                    case BaseLoaderCallback.SUCCESS:
-                        cameraBridgeViewBase.enableView();
-                        break;
-                    default:
-                        super.onManagerConnected(status);
-                        break;
+            baseLoaderCallback = new BaseLoaderCallback(this) {
+                @Override
+                public void onManagerConnected(int status) {
+                    super.onManagerConnected(status);
+
+                    switch(status){
+                        case BaseLoaderCallback.SUCCESS:
+                            cameraBridgeViewBase.enableView();
+                            break;
+                        default:
+                            super.onManagerConnected(status);
+                            break;
+                    }
                 }
-            }
-        };
+            };
+        }
+        catch (IllegalStateException e) {
+        }
+        catch (NullPointerException e) {
+        }
+        catch (IllegalArgumentException e){
+        }
+        catch (Exception e){
+        }
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        final Mat frame = inputFrame.rgba();
-        if (startCanny == true)
-        {
-            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
-            Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
-        }
+        try {
 
-    //fixing the image orientation prblm
-        final Mat frameCopy = frame.clone();
-
-        final Mat mRgbaT = frame.t();
-        Core.flip(frame.t(), mRgbaT, 1);
-        Imgproc.resize(mRgbaT, mRgbaT, frame.size());
-
-    //on clicking on capture button
-        captureBtn.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-            @Override
-            public void onClick(View v)
+            final Mat frame = inputFrame.rgba();
+            if (startCanny == true)
             {
-                Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
+                Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
+                Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
+            }
+
+            //fixing the image orientation prblm
+            final Mat frameCopy = frame.clone();
+
+            final Mat mRgbaT = frame.t();
+            Core.flip(frame.t(), mRgbaT, 1);
+            Imgproc.resize(mRgbaT, mRgbaT, frame.size());
+
+            //on clicking on capture button
+            captureBtn.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+                @Override
+                public void onClick(View v)
+                {
+                    Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
 
 //            //playing capture sound
 //                MediaActionSound sound = new MediaActionSound();
@@ -120,47 +135,58 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 //
 ////                imageView.setImageBitmap(resultBitmap);
 
-            //trying to get the points of contour
-                Thread t = new Thread(new Runnable() {
-                    public void run()
-                    {
-                        try
+                    //trying to get the points of contour
+                    Thread t = new Thread(new Runnable() {
+                        public void run()
                         {
-                            int colSize = frameCopy.cols();
-                            int rowSize = frameCopy.rows();
-
-                            ArrayList<int[]> coords = new ArrayList<>();
-                            for (int row=0; row<frameCopy.rows(); row++)
+                            try
                             {
-                                for (int col=0; col<frameCopy.cols(); col++ )
+                                int colSize = frameCopy.cols();
+                                int rowSize = frameCopy.rows();
+
+                                ArrayList<int[]> coords = new ArrayList<>();
+                                for (int row=0; row<frameCopy.rows(); row++)
                                 {
-                                    double dataMat[] = frameCopy.get(row,col);
-                                    if(dataMat[0] != 0.0) //if not black
+                                    for (int col=0; col<frameCopy.cols(); col++ )
                                     {
-                                        int coord[] = {-row+rowSize, -col+rowSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
-                                        coords.add(coord);
+                                        double dataMat[] = frameCopy.get(row,col);
+                                        if(dataMat[0] != 0.0) //if not black
+                                        {
+                                            int coord[] = {-row+rowSize, -col+rowSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                            coords.add(coord);
+                                        }
                                     }
                                 }
+
+                                //storing coordinates in excel sheet
+                                createExcel(coords);
+
                             }
-
-                        //storing coordinates in excel sheet
-                            createExcel(coords);
-
+                            catch (IllegalArgumentException e) {
+                                e.printStackTrace();
+                            }
+                            catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
-                        catch (IllegalArgumentException e) {
-                            e.printStackTrace();
-                        }
-                        catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-                t.start();
-            }
-        });
+                    });
+                    t.start();
+                }
+            });
 
-    //showing image
-        return mRgbaT;
+            //showing image
+            return mRgbaT;
+        }
+        catch (IllegalStateException e) {
+        }
+        catch (NullPointerException e) {
+        }
+        catch (IllegalArgumentException e){
+        }
+        catch (Exception e){
+        }
+
+        return inputFrame.rgba();
     }
 
 //function to show toast in the UI thread

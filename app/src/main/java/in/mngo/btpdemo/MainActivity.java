@@ -7,23 +7,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.StrictMode;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.concurrent.TimeoutException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,9 +56,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     else // all permission are granted so starting camera
                     {
-                        Intent cameraActivity = new Intent(MainActivity.this, CameraActivity.class);
-                        startActivity(cameraActivity);
-                        //openBackCamera();
+                        try {
+                            Intent cameraActivity = new Intent(MainActivity.this, CameraActivity.class);
+                            startActivity(cameraActivity);
+                            //openBackCamera();
+                        }
+                        catch (Exception e) {
+                        }
                     }
                 }
             }
