@@ -21,18 +21,15 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class CameraActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
 {
@@ -78,10 +75,10 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        Mat frame = inputFrame.gray();
+        Mat frame = inputFrame.rgba();
         if (startCanny == true)
         {
-//            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
+            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
             Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
         }
 
@@ -94,7 +91,10 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         captureBtn.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)
+            {
+                Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
+
 //            //playing capture sound
 //                MediaActionSound sound = new MediaActionSound();
 //                sound.play(MediaActionSound.SHUTTER_CLICK);
@@ -105,41 +105,64 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 //
 //            //saving the image
 //                storeImage(resultBitmap);
+//
+////                imageView.setImageBitmap(resultBitmap);
 
-                //imageView.setImageBitmap(resultBitmap);
-
-                try
-                {
-//                    int size = (int)(mRgbaT.rows());
-
-                    int count = 0;
-                    for (int row=0; row<mRgbaT.rows(); row++)
+            //trying to get the points of contour
+                Thread t = new Thread(new Runnable() {
+                    public void run()
                     {
-                        for (int col=0; col<mRgbaT.cols(); col++ )
+                        try
                         {
-                            double dataMat[] = mRgbaT.get(row,col);
-                            if(dataMat[0] != 0.0)
-                                count++;
+                            ArrayList<int[]> coords = new ArrayList<>();
+
+                            int count = 0;
+                            for (int row=0; row<mRgbaT.rows(); row++)
+                            {
+                                for (int col=0; col<mRgbaT.cols(); col++ )
+                                {
+                                    double dataMat[] = mRgbaT.get(row,col);
+
+                                    if(dataMat[0] != 0.0) //if not black
+                                    {
+                                        count++;
+
+                                        int coord[] = {row, col};
+                                        coords.add(coord);
+                                    }
+                                }
+                            }
+
+                            updatefeed(Integer.toString(count));
+
+//                          Log.w(String.valueOf(this), coords.toString() );
+                        }
+                        catch (IllegalArgumentException e) {
+                            e.printStackTrace();
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
-
-                    List<Point> lista = null;
-//                    Converters.Mat_to_vector_Point(mRgbaT, lista);
-//                    Log.w(String.valueOf(this), Double.toString(mRgbaT.get(1,1)[0]));
-
-                    Toast.makeText(CameraActivity.this, Integer.toString(count), Toast.LENGTH_SHORT).show();
-                }
-                catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+                });
+                t.start();
             }
         });
 
     //showing image
         return mRgbaT;
+    }
+
+//function to show toast in the UI thread
+    private void updatefeed(final String text)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run()
+            {
+                Toast.makeText(CameraActivity.this, text, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 //saving the image in phone
@@ -180,6 +203,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         return mediaFile;
     }
 
+//pause stop and other functions
     @Override
     public void onCameraViewStarted(int width, int height) {
 
