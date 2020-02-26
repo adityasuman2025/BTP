@@ -85,7 +85,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        Mat frame = inputFrame.rgba();
+        final Mat frame = inputFrame.rgba();
         if (startCanny == true)
         {
             Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
@@ -93,6 +93,8 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         }
 
     //fixing the image orientation prblm
+        final Mat frameCopy = frame.clone();
+
         final Mat mRgbaT = frame.t();
         Core.flip(frame.t(), mRgbaT, 1);
         Imgproc.resize(mRgbaT, mRgbaT, frame.size());
@@ -124,20 +126,18 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     {
                         try
                         {
+                            int colSize = frameCopy.cols();
+                            int rowSize = frameCopy.rows();
+
                             ArrayList<int[]> coords = new ArrayList<>();
-
-                            int count = 0;
-                            for (int row=0; row<mRgbaT.rows(); row++)
+                            for (int row=0; row<frameCopy.rows(); row++)
                             {
-                                for (int col=0; col<mRgbaT.cols(); col++ )
+                                for (int col=0; col<frameCopy.cols(); col++ )
                                 {
-                                    double dataMat[] = mRgbaT.get(row,col);
-
+                                    double dataMat[] = frameCopy.get(row,col);
                                     if(dataMat[0] != 0.0) //if not black
                                     {
-                                        count++;
-
-                                        int coord[] = {row, col};
+                                        int coord[] = {-row+rowSize, -col+rowSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
                                         coords.add(coord);
                                     }
                                 }
@@ -206,14 +206,15 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         int coordSize = coords.size();
         for(int i=0; i< coordSize; i++)
         {
-            Row tempRow = sheet.createRow(i+1);
+            int coord[] = coords.get(i);
 
+            Row tempRow = sheet.createRow(i+1);
             Cell tempCell = null;
             tempCell = tempRow.createCell(0);
-            tempCell.setCellValue(coords.get(i)[0]);
+            tempCell.setCellValue(coord[0]);
 
             tempCell = tempRow.createCell(1);
-            tempCell.setCellValue(coords.get(i)[1]);
+            tempCell.setCellValue(coord[1]);
         }
 
         File excelFile = getOutputExcelFile();
@@ -248,9 +249,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         }
 
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        String timeStamp = new SimpleDateFormat("dd_MM_yy_HH_mm_ss").format(new Date());
         File mediaFile;
-        String mImageName="BTP_coords_"+ timeStamp +".xls";
+        String mImageName="BTP_coords_"+ timeStamp +".xlsx";
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
         return mediaFile;
     }
