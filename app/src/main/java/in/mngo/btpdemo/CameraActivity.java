@@ -72,14 +72,14 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 }
             }
         };
-
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
         Mat frame = inputFrame.rgba();
-        if (startCanny == true) {
+        if (startCanny == true)
+        {
             Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
             Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
         }
