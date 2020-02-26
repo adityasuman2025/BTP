@@ -1,9 +1,7 @@
 package in.mngo.btpdemo;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaActionSound;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,19 +17,22 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCameraView;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class CameraActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
 {
@@ -77,10 +78,10 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
-        Mat frame = inputFrame.rgba();
+        Mat frame = inputFrame.gray();
         if (startCanny == true)
         {
-            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
+//            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
             Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
         }
 
@@ -94,18 +95,46 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void onClick(View v) {
-            //playing capture sound
-                MediaActionSound sound = new MediaActionSound();
-                sound.play(MediaActionSound.SHUTTER_CLICK);
-
-            //crating bitmap of the camera view image
-                Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(mRgbaT, resultBitmap);
-
-            //saving the image
-                storeImage(resultBitmap);
+//            //playing capture sound
+//                MediaActionSound sound = new MediaActionSound();
+//                sound.play(MediaActionSound.SHUTTER_CLICK);
+//
+//            //crating bitmap of the camera view image
+//                Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
+//                Utils.matToBitmap(mRgbaT, resultBitmap);
+//
+//            //saving the image
+//                storeImage(resultBitmap);
 
                 //imageView.setImageBitmap(resultBitmap);
+
+                try
+                {
+//                    int size = (int)(mRgbaT.rows());
+
+                    int count = 0;
+                    for (int row=0; row<mRgbaT.rows(); row++)
+                    {
+                        for (int col=0; col<mRgbaT.cols(); col++ )
+                        {
+                            double dataMat[] = mRgbaT.get(row,col);
+                            if(dataMat[0] != 0.0)
+                                count++;
+                        }
+                    }
+
+                    List<Point> lista = null;
+//                    Converters.Mat_to_vector_Point(mRgbaT, lista);
+//                    Log.w(String.valueOf(this), Double.toString(mRgbaT.get(1,1)[0]));
+
+                    Toast.makeText(CameraActivity.this, Integer.toString(count), Toast.LENGTH_SHORT).show();
+                }
+                catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
