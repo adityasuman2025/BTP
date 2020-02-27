@@ -19,7 +19,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
@@ -28,11 +27,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -152,7 +149,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                                         double dataMat[] = frameCopy.get(row,col);
                                         if(dataMat[0] != 0.0) //if not black
                                         {
-                                            int coord[] = {-row+rowSize, -col+rowSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                            int coord[] = {-row+rowSize, -col+colSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
                                             coords.add(coord);
                                         }
                                     }
