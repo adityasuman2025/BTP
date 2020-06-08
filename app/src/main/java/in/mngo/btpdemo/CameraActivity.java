@@ -60,7 +60,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         imageView = findViewById(R.id.imageView);
 
     // defining the camera preview view
-
         try {
             cameraBridgeViewBase = findViewById(R.id.CameraView);
             cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
@@ -96,7 +95,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
         try {
-
             final Mat frame = inputFrame.rgba();
             if (startCanny == true)
             {
@@ -123,7 +121,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 //                MediaActionSound sound = new MediaActionSound();
 //                sound.play(MediaActionSound.SHUTTER_CLICK);
 //
-//            //crating bitmap of the camera view image
+//            //creating bitmap of the camera view image
 //                Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
 //                Utils.matToBitmap(mRgbaT, resultBitmap);
 //
@@ -157,7 +155,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
                                 //storing coordinates in excel sheet
                                 createExcel(coords);
-
                             }
                             catch (IllegalArgumentException e) {
                                 e.printStackTrace();
@@ -260,6 +257,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         }
     }
 
+//function to save the generated excel file
     private File getOutputExcelFile(){
         File mediaStorageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS);
