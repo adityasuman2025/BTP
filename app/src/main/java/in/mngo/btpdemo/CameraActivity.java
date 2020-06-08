@@ -92,7 +92,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     }
 
     @Override
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
+    public Mat onCameraFrame(final CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
         try {
             final Mat frame = inputFrame.rgba();
@@ -134,26 +134,43 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     Thread t = new Thread(new Runnable() {
                         public void run()
                         {
-                            try
-                            {
+                            try  {
                                 int colSize = frameCopy.cols();
                                 int rowSize = frameCopy.rows();
 
+                            // coordinates of apex
+                                int minYCord = -0+rowSize;
+                                int xForMinYCord =  -0+rowSize;
+
+                            // looping through points in th matrix
                                 ArrayList<int[]> coords = new ArrayList<>();
-                                for (int row=0; row<frameCopy.rows(); row++)
+                                for (int row=0; row<rowSize; row++)
                                 {
-                                    for (int col=0; col<frameCopy.cols(); col++ )
+                                    for (int col=0; col<colSize; col++ )
                                     {
-                                        double dataMat[] = frameCopy.get(row,col);
+                                        double dataMat[] = frameCopy.get(row, col);
                                         if(dataMat[0] != 0.0) //if not black
                                         {
-                                            int coord[] = {-row+rowSize, -col+colSize}; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                            int X = -row+rowSize;
+                                            int Y = -col+colSize;
+
+                                        //setting min Y coordinate and its corresponding X coordinate
+                                            if( Y <  minYCord ) {
+                                                minYCord = Y;
+                                                xForMinYCord = X;
+                                            }
+                                        //storing coordinates
+                                            int coord[] = { X, Y }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
                                             coords.add(coord);
                                         }
                                     }
                                 }
+                                
+                            //storing min cordinates
+                                int coord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                coords.add(coord);
 
-                                //storing coordinates in excel sheet
+                            //storing coordinates in excel sheet
                                 createExcel(coords);
                             }
                             catch (IllegalArgumentException e) {
