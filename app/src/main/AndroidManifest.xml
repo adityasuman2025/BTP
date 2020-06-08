@@ -19,8 +19,8 @@
         android:roundIcon="@drawable/iitp_logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".CameraActivity" android:label="Camera Preview" />
-        <activity android:name=".MainActivity" android:label="BTP Demo App">
+        <activity android:name=".CameraActivity" android:label="Surface Tension" />
+        <activity android:name=".MainActivity" android:label="BTP App">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

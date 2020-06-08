@@ -20,6 +20,50 @@
         android:layout_centerVertical="true"/>
 
     <LinearLayout
+        android:id="@+id/calculationLayout"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@color/white"
+        android:gravity="center"
+        android:padding="20dp">
+        <EditText
+            android:id="@+id/densityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="density of liquid"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/gravityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="gravitational constant"
+            android:layout_marginBottom="20dp"/>
+
+        <Button
+            android:id="@+id/calculateBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:background="@color/colorPrimary"
+            android:padding="0dp"
+            android:text="calculate"
+            android:layout_marginBottom="20dp"/>
+
+        <TextView
+            android:id="@+id/resultView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20dp"
+            android:text="hi"
+            android:textColor="@color/colorAccent"/>
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/continueBtnLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -53,7 +97,7 @@
 
     <Button
         android:id="@+id/captureBtn"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Capture"
         android:layout_alignParentBottom="true"

@@ -10,8 +10,10 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -53,6 +55,12 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     Button reCaptureBtn;
     Button continueBtn;
 
+    LinearLayout calculationLayout;
+    EditText densityInput;
+    EditText gravityInput;
+    Button calculateBtn;
+    TextView resultView;
+
     BaseLoaderCallback baseLoaderCallback;
     boolean startCanny = true;
 
@@ -62,6 +70,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+    //defining views
         imageView = findViewById(R.id.imageView);
 
         captureBtn = findViewById(R.id.captureBtn);
@@ -69,6 +78,14 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         continueBtnLayout = findViewById(R.id.continueBtnLayout);
         reCaptureBtn = findViewById(R.id.reCaptureBtn);
         continueBtn = findViewById(R.id.continueBtn);
+
+        imageView = findViewById(R.id.imageView);
+
+        calculationLayout = findViewById(R.id.calculationLayout);
+        densityInput = findViewById(R.id.densityInput);
+        gravityInput = findViewById(R.id.gravityInput);
+        calculateBtn = findViewById(R.id.calculateBtn);
+        resultView = findViewById(R.id.resultView);
 
     // defining the camera preview view
         try {
@@ -157,12 +174,28 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
                 @Override
                 public void onClick(View v) {
-                    //hiding and showing stuffs
+                //hiding and showing stuffs
                     captureBtn.setVisibility(View.VISIBLE);
                     continueBtnLayout.setVisibility(View.INVISIBLE);
 
                     cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
                     imageView.setVisibility(View.INVISIBLE);
+                }
+            });
+
+        //on pressing continue btn
+            continueBtn.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+                @Override
+                public void onClick(View v) {
+                //hiding and showing stuffs
+                    captureBtn.setVisibility(View.INVISIBLE);
+                    continueBtnLayout.setVisibility(View.INVISIBLE);
+
+                    cameraBridgeViewBase.setVisibility(SurfaceView.GONE);
+                    imageView.setVisibility(View.INVISIBLE);
+
+                    calculationLayout.setVisibility(View.VISIBLE);
                 }
             });
 
