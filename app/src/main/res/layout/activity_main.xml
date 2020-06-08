@@ -15,7 +15,18 @@
         android:textAlignment="center"
         android:layout_gravity="center"
         android:layout_centerHorizontal="true"
-       android:layout_marginTop="50dp"/>
+        android:layout_marginTop="50dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/imageView1"
+        android:paddingHorizontal="10dp"
+        android:layout_marginBottom="-170dp"
+        android:text="Try to capture a noise less image of the drop as our algorithm is not able to reduce much of the noise. Use Re-Capture button until you get the noise less image."
+        android:textSize="20dp"
+        android:gravity="center"
+        android:textColor="@color/red"/>
 
     <Button
         android:id="@+id/button1"
