@@ -165,10 +165,18 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                                         }
                                     }
                                 }
-                                
+
                             //storing min cordinates
-                                int coord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
-                                coords.add(coord);
+                                int minCoord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                coords.add(minCoord);
+
+                            //making origin at apex
+                                for( int i = 0 ; i<coords.size(); i++ ) {
+                                    int coord[] = coords.get(i);
+
+                                    int newCoord [] = { coord[0] - xForMinYCord, coord[1] - minYCord };
+                                    coords.set(i, newCoord);
+                                }
 
                             //storing coordinates in excel sheet
                                 createExcel(coords);
