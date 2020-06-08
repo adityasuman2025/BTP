@@ -130,7 +130,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             }
 
         //fixing the image orientation prblm
-            Mat frameCopy = frame.clone();
+            final Mat frameCopy = frame.clone();
 
             final Mat mRgbaT = frame.t();
             Core.flip(frame.t(), mRgbaT, 1);
@@ -201,25 +201,25 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
                 //if user has given all data in input fields
                     if( !densityStr.equals("") && !gravityStr.equals("") ) {
-                        resultView.setText("please wait...");
+                        updateResult("please wait...");
 //                    Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
 
                         double density = Double.parseDouble( densityStr );
                         double gravity =  Double.parseDouble( gravityStr);
 
-                        resultView.setText( densityStr + " " + gravityStr );
+                        resultView.setText( density + " " + gravity );
 
                     //creating bitmap of the camera view image
                         Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
                         Utils.matToBitmap(mRgbaT, resultBitmap);
 
                     //saving the image
-                        storeImage(resultBitmap);
+//                        storeImage(resultBitmap);
 
                     // getting points of the edge
-//                      getPoints(frameCopy);
+                         getPoints(frameCopy);
                     } else {
-                        resultView.setText( "please enter density & gravitational constant" );
+                        updateResult( "please enter density & gravitational constant" );
                     }
                 }
             });
@@ -251,6 +251,17 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         });
     }
 
+//function to show text in result view in UI thread
+    private void updateResult(final String text)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                resultView.setText( text );
+            }
+        });
+    }
+
 //function to get points coordinates of the edge of the image
     private void getPoints(final Mat frameCopy) {
         Thread t = new Thread(new Runnable() {
@@ -259,11 +270,11 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     int colSize = frameCopy.cols();
                     int rowSize = frameCopy.rows();
 
-                    // coordinates of apex
+                // coordinates of apex
                     int minYCord = -0+rowSize;
                     int xForMinYCord =  -0+rowSize;
 
-                    // looping through points in th matrix
+                // looping through points in th matrix
                     ArrayList<int[]> coords = new ArrayList<>();
                     for (int row=0; row<rowSize; row++)
                     {
@@ -287,41 +298,80 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                         }
                     }
 
-                    //storing min coordinates
-                    int minCoord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
-                    coords.add(minCoord);
-
-                    //getting max x coordinates
+                //getting max x coordinates
                     int maxXCord = 0;
 
-                    //making origin at apex
+                    int indexOfMinCord = 0;
+
+                //making origin at apex
                     for( int i = 0 ; i<coords.size(); i++ ) {
                         int coord[] = coords.get(i);
                         int newX = coord[0] - xForMinYCord;
                         int newY = coord[1] - minYCord;
 
-                        //setting max X coord
-                        if( newX >maxXCord ) {
+                    //getting index in the array whose coordinate is apex i.e (0, 0)
+                        if( newX == 0 && newY == 0 ) {
+                            indexOfMinCord = i;
+                        }
+
+                    //setting max X coord
+                        if( newX > maxXCord ) {
                             maxXCord = newX;
                         }
 
-                        //storing new coordinates
+                    //storing new coordinates
                         int newCoord [] = { newX, newY };
                         coords.set(i, newCoord);
                     }
 
-                    //storing coordinates in excel sheet
-                    createExcel(coords);
-                }
-                catch (IllegalArgumentException e) {
+                //calculating radius of curvature at apex
+                    try {
+                    //here y = z and x = x
+                        int z1 = coords.get( indexOfMinCord )[1];
+                        int x1 = coords.get( indexOfMinCord )[0];
+
+                        int z2 = coords.get( indexOfMinCord + 1 )[1];
+                        int x2 = coords.get( indexOfMinCord + 1 )[0];
+
+                        int z3 = coords.get( indexOfMinCord + 2 )[1];
+                        int x3 = coords.get( indexOfMinCord + 2 )[0];
+
+                        int z4 = coords.get( indexOfMinCord + 3 )[1];
+                        int x4 = coords.get( indexOfMinCord + 3 )[0];
+
+                        double dz_dx = normalize( z2, z1 )/normalize( x2, x1 );
+
+                        double dz_dx_2_3 = normalize( z3, z2 )/normalize( x3, x2 );
+
+                        double d2z_dx2 = normalize( dz_dx_2_3, dz_dx )/normalize( x3, x1 );
+
+                        double radiusAtApex = ( Math.pow(  Math.abs( 1 + dz_dx*dz_dx ), 3/2 ) / Math.abs( d2z_dx2 )  );
+
+                        updateResult( Double.toString( radiusAtApex ) );
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                //storing coordinates in excel sheet
+//                    createExcel(coords);
+                } catch (IllegalArgumentException e) {
                     e.printStackTrace();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
         t.start();
+    }
+// function to make subtract val 1 if it is 0
+    private double normalize( double a, double b ) {
+        double diff = a-b;
+        if( diff == 0.0 ) {
+            diff = 1.0;
+        }
+
+        return diff;
     }
 
 //function to create and store coordinates in excel
