@@ -202,22 +202,19 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 //if user has given all data in input fields
                     if( !densityStr.equals("") && !gravityStr.equals("") ) {
                         updateResult("please wait...");
-//                    Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
 
                         double density = Double.parseDouble( densityStr );
                         double gravity =  Double.parseDouble( gravityStr);
 
-                        resultView.setText( density + " " + gravity );
+                    // getting points of the edge and calculating surface tension from that
+                         getPoints( frameCopy, density, gravity );
 
                     //creating bitmap of the camera view image
-                        Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
-                        Utils.matToBitmap(mRgbaT, resultBitmap);
+//                        Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
+//                        Utils.matToBitmap(mRgbaT, resultBitmap);
 
                     //saving the image
 //                        storeImage(resultBitmap);
-
-                    // getting points of the edge
-                         getPoints(frameCopy);
                     } else {
                         updateResult( "please enter density & gravitational constant" );
                     }
@@ -263,7 +260,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     }
 
 //function to get points coordinates of the edge of the image
-    private void getPoints(final Mat frameCopy) {
+    private void getPoints( final Mat frameCopy, double density, double gravity ) {
         Thread t = new Thread(new Runnable() {
             public void run() {
                 try  {
@@ -299,8 +296,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     }
 
                 //getting max x coordinates
-                    int maxXCord = 0;
-
                     int indexOfMinCord = 0;
 
                 //making origin at apex
@@ -312,11 +307,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     //getting index in the array whose coordinate is apex i.e (0, 0)
                         if( newX == 0 && newY == 0 ) {
                             indexOfMinCord = i;
-                        }
-
-                    //setting max X coord
-                        if( newX > maxXCord ) {
-                            maxXCord = newX;
                         }
 
                     //storing new coordinates
@@ -347,12 +337,48 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
                         double radiusAtApex = ( Math.pow(  Math.abs( 1 + dz_dx*dz_dx ), 3/2 ) / Math.abs( d2z_dx2 )  );
 
-                        updateResult( Double.toString( radiusAtApex ) );
+//                        updateResult( Double.toString( radiusAtApex ) );
 
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
 
+                // for calculating B
+                    try {
+                        int size = coords.size();
+
+                        int done45 = 0;
+                        int done30 = 0;
+
+                        int Z_45 = coords.get( size - 1 )[1]; //Z thetha 2
+                        int Z_30 = coords.get( size - 1 )[1]; //Z thetha 1
+
+                        for( int i = size - 1; i>indexOfMinCord; i-- ) {
+                            int coord[] = coords.get(i);
+                            int X = coord[0];
+                            int Z = coord[1];
+
+                        //for line, tan45 = z/x
+                            if( Z == X ) {
+                                Z_45 = Z;
+                                done45 = 1;
+                            }
+
+                        //for line, tan30 = z/x
+                            if( Z == Math.round((double)(X) * (double)(0.577)) ) {
+                                Z_30 = Z;
+                                done30 = 1;
+                            }
+
+                            if( done45 == 1 && done30 == 1 ) {
+                                break;
+                            }
+                        }
+
+                        updateResult(String.format("%s %s", Integer.toString(Z_45), Integer.toString(Z_30)));
+                    } catch ( Exception e ) {
+                        e.printStackTrace();
+                    }
                 //storing coordinates in excel sheet
 //                    createExcel(coords);
                 } catch (IllegalArgumentException e) {
@@ -364,6 +390,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         });
         t.start();
     }
+
 // function to make subtract val 1 if it is 0
     private double normalize( double a, double b ) {
         double diff = a-b;
