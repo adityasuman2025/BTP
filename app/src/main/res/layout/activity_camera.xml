@@ -14,10 +14,42 @@
 
     <ImageView
         android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>
+
+    <LinearLayout
+        android:id="@+id/continueBtnLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/captureBtn"
-        android:layout_centerHorizontal="true"/>
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:visibility="invisible">
+        <Button
+            android:id="@+id/reCaptureBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Re-Capture"
+            android:layout_centerHorizontal="true"
+            android:layout_marginRight="10dp"
+            android:padding="0dp"
+            android:textColor="@color/white"
+            android:background="@color/colorPrimary"/>
+
+        <Button
+            android:id="@+id/continueBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Continue"
+            android:layout_centerHorizontal="true"
+            android:layout_marginLeft="10dp"
+            android:padding="0dp"
+            android:textColor="@color/white"
+            android:background="@color/green" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/captureBtn"

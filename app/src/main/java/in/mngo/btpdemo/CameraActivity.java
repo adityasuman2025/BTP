@@ -11,6 +11,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -19,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
@@ -43,9 +45,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class CameraActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
 {
     myJavaCameraView cameraBridgeViewBase;
+    ImageView imageView;
 
     Button captureBtn;
-    ImageView imageView;
+
+    LinearLayout continueBtnLayout;
+    Button reCaptureBtn;
+    Button continueBtn;
 
     BaseLoaderCallback baseLoaderCallback;
     boolean startCanny = true;
@@ -56,8 +62,13 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        captureBtn = findViewById(R.id.captureBtn);
         imageView = findViewById(R.id.imageView);
+
+        captureBtn = findViewById(R.id.captureBtn);
+
+        continueBtnLayout = findViewById(R.id.continueBtnLayout);
+        reCaptureBtn = findViewById(R.id.reCaptureBtn);
+        continueBtn = findViewById(R.id.continueBtn);
 
     // defining the camera preview view
         try {
@@ -96,20 +107,19 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     {
         try {
             final Mat frame = inputFrame.rgba();
-            if (startCanny == true)
-            {
+            if (startCanny == true) {
                 Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2GRAY); //converting image to grayscale
                 Imgproc.Canny(frame, frame, 100, 80); //converting image to canny or edge detection image
             }
 
-            //fixing the image orientation prblm
-            final Mat frameCopy = frame.clone();
+        //fixing the image orientation prblm
+            Mat frameCopy = frame.clone();
 
             final Mat mRgbaT = frame.t();
             Core.flip(frame.t(), mRgbaT, 1);
             Imgproc.resize(mRgbaT, mRgbaT, frame.size());
 
-            //on clicking on capture button
+        //on clicking on capture button
             captureBtn.setOnClickListener(new View.OnClickListener() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
                 @Override
@@ -117,83 +127,46 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 {
                     Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
 
-//            //playing capture sound
-//                MediaActionSound sound = new MediaActionSound();
-//                sound.play(MediaActionSound.SHUTTER_CLICK);
-//
-//            //creating bitmap of the camera view image
-//                Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
-//                Utils.matToBitmap(mRgbaT, resultBitmap);
-//
-//            //saving the image
-//                storeImage(resultBitmap);
-//
-////                imageView.setImageBitmap(resultBitmap);
+                //playing capture sound
+                    MediaActionSound sound = new MediaActionSound();
+                    sound.play(MediaActionSound.SHUTTER_CLICK);
 
-                    //trying to get the points of contour
-                    Thread t = new Thread(new Runnable() {
-                        public void run()
-                        {
-                            try  {
-                                int colSize = frameCopy.cols();
-                                int rowSize = frameCopy.rows();
+                //creating bitmap of the camera view image
+                    Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(mRgbaT, resultBitmap);
 
-                            // coordinates of apex
-                                int minYCord = -0+rowSize;
-                                int xForMinYCord =  -0+rowSize;
+                //showing and hiding stuffs
+                    captureBtn.setVisibility(View.INVISIBLE);
+                    continueBtnLayout.setVisibility(View.VISIBLE);
 
-                            // looping through points in th matrix
-                                ArrayList<int[]> coords = new ArrayList<>();
-                                for (int row=0; row<rowSize; row++)
-                                {
-                                    for (int col=0; col<colSize; col++ )
-                                    {
-                                        double dataMat[] = frameCopy.get(row, col);
-                                        if(dataMat[0] != 0.0) //if not black
-                                        {
-                                            int X = -row+rowSize;
-                                            int Y = -col+colSize;
+                    cameraBridgeViewBase.setVisibility(SurfaceView.GONE);
 
-                                        //setting min Y coordinate and its corresponding X coordinate
-                                            if( Y <  minYCord ) {
-                                                minYCord = Y;
-                                                xForMinYCord = X;
-                                            }
-                                        //storing coordinates
-                                            int coord[] = { X, Y }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
-                                            coords.add(coord);
-                                        }
-                                    }
-                                }
+                    imageView.setVisibility(View.VISIBLE);
+                    imageView.setImageBitmap(resultBitmap);
 
-                            //storing min cordinates
-                                int minCoord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
-                                coords.add(minCoord);
+                //saving the image
+//                    storeImage(resultBitmap);
 
-                            //making origin at apex
-                                for( int i = 0 ; i<coords.size(); i++ ) {
-                                    int coord[] = coords.get(i);
-
-                                    int newCoord [] = { coord[0] - xForMinYCord, coord[1] - minYCord };
-                                    coords.set(i, newCoord);
-                                }
-
-                            //storing coordinates in excel sheet
-                                createExcel(coords);
-                            }
-                            catch (IllegalArgumentException e) {
-                                e.printStackTrace();
-                            }
-                            catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                    t.start();
+                // getting points of the edge
+//                    getPoints(frameCopy);
                 }
             });
 
-            //showing image
+        //on pressing reCapture btn
+            reCaptureBtn.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+                @Override
+                public void onClick(View v) {
+                    //hiding and showing stuffs
+                    captureBtn.setVisibility(View.VISIBLE);
+                    continueBtnLayout.setVisibility(View.INVISIBLE);
+
+                    cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
+                    imageView.setVisibility(View.INVISIBLE);
+                }
+            });
+
+        //showing image
             return mRgbaT;
         }
         catch (IllegalStateException e) {
@@ -218,6 +191,79 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 Toast.makeText(CameraActivity.this, text, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+//function to get points coordinates of the edge of the image
+    private void getPoints(final Mat frameCopy) {
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                try  {
+                    int colSize = frameCopy.cols();
+                    int rowSize = frameCopy.rows();
+
+                    // coordinates of apex
+                    int minYCord = -0+rowSize;
+                    int xForMinYCord =  -0+rowSize;
+
+                    // looping through points in th matrix
+                    ArrayList<int[]> coords = new ArrayList<>();
+                    for (int row=0; row<rowSize; row++)
+                    {
+                        for (int col=0; col<colSize; col++ )
+                        {
+                            double dataMat[] = frameCopy.get(row, col);
+                            if(dataMat[0] != 0.0) //if not black
+                            {
+                                int X = -row+rowSize;
+                                int Y = -col+colSize;
+
+                                //setting min Y coordinate and its corresponding X coordinate
+                                if( Y <  minYCord ) {
+                                    minYCord = Y;
+                                    xForMinYCord = X;
+                                }
+                                //storing coordinates
+                                int coord[] = { X, Y }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                                coords.add(coord);
+                            }
+                        }
+                    }
+
+                    //storing min coordinates
+                    int minCoord[] = { xForMinYCord, minYCord }; // image was coming mirror about x and y axis so doing this (-row+rowSize)
+                    coords.add(minCoord);
+
+                    //getting max x coordinates
+                    int maxXCord = 0;
+
+                    //making origin at apex
+                    for( int i = 0 ; i<coords.size(); i++ ) {
+                        int coord[] = coords.get(i);
+                        int newX = coord[0] - xForMinYCord;
+                        int newY = coord[1] - minYCord;
+
+                        //setting max X coord
+                        if( newX >maxXCord ) {
+                            maxXCord = newX;
+                        }
+
+                        //storing new coordinates
+                        int newCoord [] = { newX, newY };
+                        coords.set(i, newCoord);
+                    }
+
+                    //storing coordinates in excel sheet
+                    createExcel(coords);
+                }
+                catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();
     }
 
 //function to create and store coordinates in excel
@@ -313,8 +359,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             return;
         }
 
-        try
-        {
+        try {
             FileOutputStream fos = new FileOutputStream(pictureFile);
             image.compress(Bitmap.CompressFormat.PNG, 90, fos);
             fos.close();
@@ -347,19 +392,16 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 //pause stop and other functions
     @Override
     public void onCameraViewStarted(int width, int height) {
-
     }
 
     @Override
     public void onCameraViewStopped() {
-
     }
 
     @Override
     protected void onResume()
     {
         super.onResume();
-
         if (!OpenCVLoader.initDebug()){
             Toast.makeText(getApplicationContext(),"There's a problem", Toast.LENGTH_SHORT).show();
         }
