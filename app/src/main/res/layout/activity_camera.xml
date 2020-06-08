@@ -34,6 +34,7 @@
             android:id="@+id/densityInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
             android:hint="density of liquid"
             android:layout_marginBottom="20dp"/>
 
@@ -41,6 +42,7 @@
             android:id="@+id/gravityInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
             android:hint="gravitational constant"
             android:layout_marginBottom="20dp"/>
 
@@ -59,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20dp"
-            android:text="hi"
+            android:text=""
             android:textColor="@color/colorAccent"/>
     </LinearLayout>
 

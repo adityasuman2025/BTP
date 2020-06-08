@@ -142,8 +142,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 @Override
                 public void onClick(View v)
                 {
-                    Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
-
                 //playing capture sound
                     MediaActionSound sound = new MediaActionSound();
                     sound.play(MediaActionSound.SHUTTER_CLICK);
@@ -160,12 +158,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
                     imageView.setVisibility(View.VISIBLE);
                     imageView.setImageBitmap(resultBitmap);
-
-                //saving the image
-//                    storeImage(resultBitmap);
-
-                // getting points of the edge
-//                    getPoints(frameCopy);
                 }
             });
 
@@ -196,6 +188,39 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     imageView.setVisibility(View.INVISIBLE);
 
                     calculationLayout.setVisibility(View.VISIBLE);
+                }
+            });
+
+        //on pressing calculate btn
+            calculateBtn.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+                @Override
+                public void onClick(View v) {
+                    String densityStr = densityInput.getText().toString().trim();
+                    String gravityStr =  gravityInput.getText().toString().trim();
+
+                //if user has given all data in input fields
+                    if( !densityStr.equals("") && !gravityStr.equals("") ) {
+                        resultView.setText("please wait...");
+//                    Toast.makeText(CameraActivity.this, "please wait...", Toast.LENGTH_SHORT).show();
+
+                        double density = Double.parseDouble( densityStr );
+                        double gravity =  Double.parseDouble( gravityStr);
+
+                        resultView.setText( densityStr + " " + gravityStr );
+
+                    //creating bitmap of the camera view image
+                        Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
+                        Utils.matToBitmap(mRgbaT, resultBitmap);
+
+                    //saving the image
+                        storeImage(resultBitmap);
+
+                    // getting points of the edge
+//                      getPoints(frameCopy);
+                    } else {
+                        resultView.setText( "please enter density & gravitational constant" );
+                    }
                 }
             });
 
@@ -396,6 +421,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             FileOutputStream fos = new FileOutputStream(pictureFile);
             image.compress(Bitmap.CompressFormat.PNG, 90, fos);
             fos.close();
+
+            Toast.makeText(CameraActivity.this, "image saved in phone storage", Toast.LENGTH_SHORT).show();
+
         } catch (FileNotFoundException e) {
             Log.d(String.valueOf(CameraActivity.this), "File not found: " + e.getMessage());
         } catch (IOException e) {
