@@ -6,6 +6,7 @@ import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.AndroidException;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -57,6 +58,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
     LinearLayout calculationLayout;
     EditText densityInput;
+    EditText airDensityInput;
     EditText gravityInput;
     Button calculateBtn;
     TextView resultView;
@@ -83,6 +85,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
         calculationLayout = findViewById(R.id.calculationLayout);
         densityInput = findViewById(R.id.densityInput);
+        airDensityInput = findViewById(R.id.airDensityInput);
         gravityInput = findViewById(R.id.gravityInput);
         calculateBtn = findViewById(R.id.calculateBtn);
         resultView = findViewById(R.id.resultView);
@@ -108,14 +111,10 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     }
                 }
             };
-        }
-        catch (IllegalStateException e) {
-        }
-        catch (NullPointerException e) {
-        }
-        catch (IllegalArgumentException e){
-        }
-        catch (Exception e){
+        } catch (IllegalStateException e) {
+        } catch (NullPointerException e) {
+        } catch (IllegalArgumentException e){
+        } catch (Exception e){
         }
     }
 
@@ -197,17 +196,19 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 @Override
                 public void onClick(View v) {
                     String densityStr = densityInput.getText().toString().trim();
+                    String airDensityStr =  airDensityInput.getText().toString().trim();
                     String gravityStr =  gravityInput.getText().toString().trim();
 
                 //if user has given all data in input fields
-                    if( !densityStr.equals("") && !gravityStr.equals("") ) {
+                    if( !densityStr.equals("") && !gravityStr.equals("") && !airDensityStr.equals("") ) {
                         updateResult("please wait...");
 
                         double density = Double.parseDouble( densityStr );
+                        double airDensity = Double.parseDouble( airDensityStr );
                         double gravity =  Double.parseDouble( gravityStr);
 
                     // getting points of the edge and calculating surface tension from that
-                         getPoints( frameCopy, density, gravity );
+                         getPoints( frameCopy, density, airDensity, gravity );
 
                     //creating bitmap of the camera view image
 //                        Bitmap resultBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
@@ -239,28 +240,36 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 //function to show toast in the UI thread
     private void updatefeed(final String text)
     {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run()
-            {
-                Toast.makeText(CameraActivity.this, text, Toast.LENGTH_SHORT).show();
-            }
-        });
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run()
+                {
+                    Toast.makeText(CameraActivity.this, text, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //function to show text in result view in UI thread
     private void updateResult(final String text)
     {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                resultView.setText( text );
-            }
-        });
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    resultView.setText( text );
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //function to get points coordinates of the edge of the image
-    private void getPoints( final Mat frameCopy, double density, double gravity ) {
+    private void getPoints(final Mat frameCopy, final double density, final double airDensity, final double gravity ) {
         Thread t = new Thread(new Runnable() {
             public void run() {
                 try  {
@@ -326,59 +335,61 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                         int z3 = coords.get( indexOfMinCord + 2 )[1];
                         int x3 = coords.get( indexOfMinCord + 2 )[0];
 
-                        int z4 = coords.get( indexOfMinCord + 3 )[1];
-                        int x4 = coords.get( indexOfMinCord + 3 )[0];
-
                         double dz_dx = normalize( z2, z1 )/normalize( x2, x1 );
 
                         double dz_dx_2_3 = normalize( z3, z2 )/normalize( x3, x2 );
 
                         double d2z_dx2 = normalize( dz_dx_2_3, dz_dx )/normalize( x3, x1 );
 
-                        double radiusAtApex = ( Math.pow(  Math.abs( 1 + dz_dx*dz_dx ), 3/2 ) / Math.abs( d2z_dx2 )  );
+                        double radiusAtApex = Math.pow(  Math.abs( 1 + dz_dx*dz_dx ), 3/2 ) / Math.abs( d2z_dx2 ); //R_apex = 1/K_apex //in mm
+//                        radiusAtApex = radiusAtApex * Math.pow( 10, -3 ); // in m
+                        double KApex = Math.round( (1000/radiusAtApex) * 100.0 ) / 100.0;
 
-//                        updateResult( Double.toString( radiusAtApex ) );
+                    // for calculating B
+                        try {
+                            int size = coords.size();
 
+                            int done45 = 0;
+                            int done30 = 0;
+
+                            int Z_45 = coords.get( size - 1 )[1]; //Z thetha 2
+                            int Z_30 = coords.get( size - 1 )[1]; //Z thetha 1
+
+                            for( int i = 0; i<indexOfMinCord; i++ ) {
+                                int coord[] = coords.get(i);
+                                int X = coord[0];
+                                int Z = coord[1];
+
+                            //for line, tan45 = z/x
+                                if( Z == X ) {
+                                    Z_45 = Z;
+                                    done45 = 1;
+                                }
+
+                            //for line, tan30 = z/x
+                                if( Z == Math.round((double)(X) * (double)(0.577)) ) {
+                                    Z_30 = Z;
+                                    done30 = 1;
+                                }
+
+                                if( done45 == 1 && done30 == 1 ) {
+                                    break;
+                                }
+                            }
+
+                            double r = Math.round( ((double)Z_45 / (double)Z_30) * 100.0 ) / 100.0;
+                            double B_square = Math.round( (( 0.00418 + 0*r + -1.15528*Math.pow(r, 2) + 0.28856*Math.pow(r, 4) ) / ( 1 + 0*r + -0.83765*Math.pow(r, 2) + 0.20228*Math.pow(r, 4) )) * 100.0 ) / 100.0 ;
+
+                            double surface_tension =  Math.round( Math.abs( ((density - airDensity)*gravity) / (B_square * Math.pow( KApex, 2 )) ) * 100.0 ) / 100.0;
+
+                            updateResult( "# Inverse of Radius of curvature at apex (K_apex): " + Double.toString( KApex ) + "\n# r: " + Double.toString( r )  + "\n# B2: " + Double.toString( B_square ) + "\n# surface tension: " + Double.toString( surface_tension ) + " mN/m" );
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
 
-                // for calculating B
-                    try {
-                        int size = coords.size();
-
-                        int done45 = 0;
-                        int done30 = 0;
-
-                        int Z_45 = coords.get( size - 1 )[1]; //Z thetha 2
-                        int Z_30 = coords.get( size - 1 )[1]; //Z thetha 1
-
-                        for( int i = size - 1; i>indexOfMinCord; i-- ) {
-                            int coord[] = coords.get(i);
-                            int X = coord[0];
-                            int Z = coord[1];
-
-                        //for line, tan45 = z/x
-                            if( Z == X ) {
-                                Z_45 = Z;
-                                done45 = 1;
-                            }
-
-                        //for line, tan30 = z/x
-                            if( Z == Math.round((double)(X) * (double)(0.577)) ) {
-                                Z_30 = Z;
-                                done30 = 1;
-                            }
-
-                            if( done45 == 1 && done30 == 1 ) {
-                                break;
-                            }
-                        }
-
-                        updateResult(String.format("%s %s", Integer.toString(Z_45), Integer.toString(Z_30)));
-                    } catch ( Exception e ) {
-                        e.printStackTrace();
-                    }
                 //storing coordinates in excel sheet
 //                    createExcel(coords);
                 } catch (IllegalArgumentException e) {
@@ -505,26 +516,34 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             Log.d(String.valueOf(CameraActivity.this), "File not found: " + e.getMessage());
         } catch (IOException e) {
             Log.d(String.valueOf(CameraActivity.this), "Error accessing file: " + e.getMessage());
+        } catch ( Exception e) {
+            e.printStackTrace();
         }
     }
 
     private File getOutputMediaFile(){
-        File mediaStorageDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
+        try {
+            File mediaStorageDir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_PICTURES);
 
-         // Create the storage directory if it does not exist
-        if (! mediaStorageDir.exists()){
-            if (! mediaStorageDir.mkdirs()){
-                return null;
+            // Create the storage directory if it does not exist
+            if (! mediaStorageDir.exists()){
+                if (! mediaStorageDir.mkdirs()){
+                    return null;
+                }
             }
+
+            // Create a media file name
+            String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+            File mediaFile;
+            String mImageName="BTP_images_"+ timeStamp +".jpg";
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+            return mediaFile;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // Create a media file name
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
-        File mediaFile;
-        String mImageName="BTP_images_"+ timeStamp +".jpg";
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-        return mediaFile;
+        return null;
     }
 
 //pause stop and other functions
@@ -540,28 +559,42 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     protected void onResume()
     {
         super.onResume();
-        if (!OpenCVLoader.initDebug()){
-            Toast.makeText(getApplicationContext(),"There's a problem", Toast.LENGTH_SHORT).show();
-        }
-        else
-        {
-            baseLoaderCallback.onManagerConnected(baseLoaderCallback.SUCCESS);
+
+        try {
+            if (!OpenCVLoader.initDebug()){
+                Toast.makeText(getApplicationContext(),"There's a problem", Toast.LENGTH_SHORT).show();
+            }
+            else
+            {
+                baseLoaderCallback.onManagerConnected(baseLoaderCallback.SUCCESS);
+            }
+        } catch ( Exception e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if(cameraBridgeViewBase!=null){
-            cameraBridgeViewBase.disableView();
+
+        try {
+            if(cameraBridgeViewBase!=null){
+                cameraBridgeViewBase.disableView();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (cameraBridgeViewBase!=null){
-            cameraBridgeViewBase.disableView();
+        try {
+            if (cameraBridgeViewBase!=null){
+                cameraBridgeViewBase.disableView();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

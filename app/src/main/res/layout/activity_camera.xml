@@ -35,7 +35,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal"
-            android:hint="density of liquid"
+            android:hint="density of liquid (kg/m3)"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/airDensityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="density of surrounding air (kg/m3)"
             android:layout_marginBottom="20dp"/>
 
         <EditText
@@ -43,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal"
-            android:hint="gravitational constant"
+            android:hint="gravitational constant (m/s2)"
             android:layout_marginBottom="20dp"/>
 
         <Button
@@ -58,9 +66,9 @@
 
         <TextView
             android:id="@+id/resultView"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20dp"
+            android:textSize="18dp"
             android:text=""
             android:textColor="@color/colorAccent"/>
     </LinearLayout>

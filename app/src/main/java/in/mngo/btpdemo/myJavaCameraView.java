@@ -22,21 +22,27 @@ public class myJavaCameraView extends JavaCameraView implements android.hardware
 
     public void takePicture(final String fileName)
     {
-        Log.i(TAG, "Taking Picture");
-        this.mPictureFileName = fileName;
-        mCamera.setPreviewCallback(null);
+        try {
+            Log.i(TAG, "Taking Picture");
+            this.mPictureFileName = fileName;
+            mCamera.setPreviewCallback(null);
 
-        mCamera.takePicture(null, null, this);
+            mCamera.takePicture(null, null, this);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onPictureTaken(byte[] data, android.hardware.Camera camera)
     {
         Log.i(TAG, "Saving a bitmap to file");
-        mCamera.startPreview();
-        mCamera.setPreviewCallback(this);
 
         try {
+            mCamera.startPreview();
+            mCamera.setPreviewCallback(this);
+
             FileOutputStream fos = new FileOutputStream(mPictureFileName);
 
             fos.write(data);
@@ -46,6 +52,8 @@ public class myJavaCameraView extends JavaCameraView implements android.hardware
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "exception in photo call back");
+        } catch (Exception e ) {
+            e.printStackTrace();
         }
     }
 }
